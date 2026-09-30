@@ -31,3 +31,7 @@ data/judge_cache/
 
 # 离线部署包
 dist/
+
+# 生成的成品与中间产物（PDF 介绍、渲染图等）
+output/
+tmp/
