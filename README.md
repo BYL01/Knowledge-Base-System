@@ -244,14 +244,3 @@ DeepSeek 只提供对话模型，**没有 embedding 接口**，所以分工是�
 所以无外网服务器的做法是：在本机预热判官缓存 → 连同缓存一起打进离线包 → 服务器上设 `judge.cache_only: true` 只读缓存。
 
 接入层用本地假服务端做了集成测试（`tests/test_llm_judge.py`），验证了 HTTP 调用、JSON 提取、缓存命中不重复请求、熔断生效——不碰真实 API、不花钱。
-
-## 下一步路线（对照简历里的 6 条）
-
-1. ~~搭建三层评测框架~~ 骨架已就位（retriever / generator / pipeline 已隔离，冒烟测试可直接当第一道门禁）
-2. ~~扩充 Golden Dataset~~ 已扩到 74 条，覆盖事实检索 / 多跳 / 语义改写 / 无答案；标注走 evidence 对齐流程。**剩余工作：接 DVC 做版本管理 + 补安全对抗语料**
-3. **接 RAGAS + LLM-as-judge**——接入层和判官已经就位（DeepSeek，带缓存与熔断），原子 claim 拆解的 prompt 也写好了（`judge_claims`）。**待办：在 `answerability.mode: llm` 下跑一轮，把拒答准确率从 0 拉起来，让门禁变绿**
-4. 建安全对抗语料：Prompt 注入、越权访问、PII 泄露、诱导承诺
-5. ~~CI/CD 接入~~ 无 Jenkins，已用 systemd timer 替代每日跑批，门禁走退出码。**待办：分冒烟 / 每日全量 / 发布前三档**
-6. 治理大模型输出非确定性导致的误报：判官缓存已实现，**待办：多次采样取一致**
-
-第 3 步是主线，而且卡在门禁上：跑一轮 `answerability.mode: llm` 就知道判官能不能把 `refusal_accuracy` 从 0 拉到 0.9 以上。
