@@ -1,0 +1,7 @@
+# -*- coding: utf-8 -*-
+# 交互 Demo 的依赖：核心依赖 + Streamlit。
+# 本地：pip install -r requirements-demo.txt && streamlit run app.py
+# Streamlit Cloud：部署时把 requirements file 指向本文件（默认读的是 requirements.txt）。
+-r requirements.txt
+
+streamlit>=1.49,<2

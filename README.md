@@ -11,6 +11,8 @@
 
 ## 效果预览
 
+![交互 Demo](docs/demo.png)
+
 默认后端是 `hashing` 检索 + `extractive` 生成，**零 API key、输出确定**，克隆下来即可复现。
 
 **能答的问题**——出答案的同时给出可回溯的引用：
@@ -48,6 +50,21 @@ python -m pytest tests -q             # 冒烟测试（可直接当 CI 第一道
 
 - `outputs/runs/<run_id>.jsonl`：每条问答的完整中间产物（query / retrieved / prompt / answer / citations / latency）
 - `outputs/runs/<run_id>.summary.json`：本次跑批的指标汇总
+
+## 交互 Demo（Streamlit）
+
+仓库自带一个单页 Demo：输入问题 → 显示答案、引用、拒答判定，还能展开看检索结果和实际发给生成层的 prompt。
+
+```bash
+pip install -r requirements-demo.txt
+streamlit run app.py
+```
+
+侧边栏可以切换 `off / heuristic / llm` 三种门禁——README「结论一」里说的"关键词门禁会被数据否决"，在这里点几下就能直观看到。
+
+**想放到线上、点开就能玩**：用 [Streamlit Community Cloud](https://share.streamlit.io) 免费部署，选这个仓库，
+Main file 填 `app.py`，然后在 Advanced settings 里把 requirements 文件指向 `requirements-demo.txt`。
+想让线上也能用语义判官，就在 Secrets 里加一行 `DEEPSEEK_API_KEY = "..."`；不加会自动回退到零成本模式，照样能用。
 
 ## 配置与密钥
 
