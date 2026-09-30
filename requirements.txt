@@ -1,0 +1,20 @@
+# 核心依赖：本机已具备，装完就能跑通全链路（检索/生成/跑批/冒烟测试）
+numpy>=1.24
+PyYAML>=6.0
+requests>=2.31
+pytest>=8.0
+
+# ---- 以下按学习进度逐步放开 ----
+
+# 真向量库。注意：Milvus Lite 不支持 Windows，本地先用 Chroma 顶上，
+# 等上服务器或 CI 再换 Milvus Standalone，store.py 里换一处 backend 即可。
+# chromadb>=0.5.0
+# pymilvus>=2.4.0
+
+# 真实 embedding / 生成模型
+# openai>=1.30.0
+
+# 第二批指标（忠实度、答案相关性、上下文精确率）接入时再装
+# ragas>=0.2.0
+# langchain>=0.3.0
+# langchain-community>=0.3.0

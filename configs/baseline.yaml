@@ -1,0 +1,66 @@
+# RAG 基线配置。
+# 这里任何一项改动都等于一次新的"评测版本"，会被写进每次跑批的 manifest 里。
+
+project: ecom-kb-rag
+baseline_version: v0
+
+corpus:
+  dir: data/corpus
+  glob: "*.md"
+
+chunking:
+  strategy: paragraph     # paragraph | fixed
+  chunk_size: 160         # 目标块大小（字符数）
+  chunk_overlap: 40       # 块间重叠，避免答案被切断
+
+embedding:
+  backend: hashing        # hashing（本地确定性，默认） | openai
+  dim: 512
+  model: text-embedding-3-small   # 仅 openai 后端生效
+
+store:
+  backend: local          # local（numpy 持久化，默认） | chroma
+  path: data/index/baseline
+  collection: ecom_kb
+
+retriever:
+  top_k: 4
+  min_score: 0.0
+
+generator:
+  backend: extractive     # extractive（抽取式，默认） | openai
+  prompt_version: v0
+  model: gpt-4o-mini      # 仅 openai 后端生效
+  max_context_chars: 2400
+  max_citations: 2        # 抽取式回答最多引用几段
+  temperature: 0.0
+
+# 可答性门禁：off（基线对照） | heuristic（关键词覆盖率） | llm（LLM 判官）
+# heuristic 已被数据否决，保留用于对照；上生产用 llm。
+answerability:
+  mode: "llm"                # 注意要加引号，YAML 会把裸 off 解析成布尔 False
+  min_query_coverage: 0.0    # heuristic 模式下生效
+  on_error: fallback         # llm 模式下判官不可用时：fallback（按可答处理） | refuse | raise
+
+# LLM 判官配置。DeepSeek 没有 embedding 接口，只用于生成与判官。
+judge:
+  provider: deepseek
+  model: deepseek-chat
+  timeout_seconds: 60
+  cache_dir: data/judge_cache
+  cache_only: false          # 无外网机器设 true：只用缓存，缓存未命中就走 on_error 兜底
+
+golden:
+  path: data/golden/golden_v1.jsonl   # v0 保留为历史基准，便于对比版本差异
+
+# 质量门禁：scripts/gate.py 用它决定这次跑批算不算通过
+gate:
+  min_doc_hit_rate: 0.90
+  min_chunk_hit_rate: 0.85
+  min_refusal_accuracy: 0.90      # 无答案题必须能拒答
+  max_false_refusal_rate: 0.05    # 有答案的题不能被误拒
+  max_dangling_citations: 0
+  max_p95_latency_ms: 2000
+
+run:
+  output_dir: outputs/runs

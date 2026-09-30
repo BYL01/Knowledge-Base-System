@@ -1,0 +1,21 @@
+[Unit]
+Description=电商知识库 RAG 评测跑批
+Documentation=file://__INSTALL_DIR__/README.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=__RUN_USER__
+Group=__RUN_USER__
+WorkingDirectory=__INSTALL_DIR__
+EnvironmentFile=-__INSTALL_DIR__/.env
+Environment=INSTALL_DIR=__INSTALL_DIR__
+Environment=LOG_DIR=__LOG_DIR__
+ExecStart=__INSTALL_DIR__/deploy/run_eval.sh
+# 门禁不通过时这是预期行为：让 systemd 把这次任务标成失败，便于巡检发现
+SuccessExitStatus=0
+TimeoutStartSec=1800
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,13 @@
+[Unit]
+Description=每日跑一次 RAG 评测跑批
+
+[Timer]
+# 每天凌晨 2:30，错峰加 5 分钟以内的随机抖动，避免和其它定时任务撞车
+OnCalendar=*-*-* 02:30:00
+RandomizedDelaySec=300
+# 服务器重启/关机错过的任务，开机后补跑一次
+Persistent=true
+Unit=rag-eval.service
+
+[Install]
+WantedBy=timers.target

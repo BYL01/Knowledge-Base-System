@@ -1,0 +1,13 @@
+# 统一换行：源码和文档入库走 LF，避免 Windows/Linux 协作出问题
+* text=auto eol=lf
+
+# Linux 部署脚本必须保持 LF，CRLF 会让它在服务器上直接报错
+*.sh text eol=lf
+*.service text eol=lf
+*.timer text eol=lf
+
+# 二进制/打包产物按二进制处理，不做换行转换
+*.tar.gz binary
+*.whl binary
+*.png binary
+*.jpg binary

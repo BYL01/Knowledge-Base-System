@@ -1,0 +1,33 @@
+# 真实凭据只放 .env，任何情况下都不入库（.env.example 是空模板，保留）
+.env
+.env.*
+!.env.example
+
+# 私钥 / 证书
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+
+*.pyc
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+
+# 虚拟环境
+.venv/
+venv/
+env/
+
+# 索引可随时重建，不入库
+data/index/
+
+# 跑批产物按时间戳生成，保留目录但不入库
+outputs/runs/*
+!outputs/runs/.gitkeep
+
+# 判官缓存按内容哈希生成，可重新预热
+data/judge_cache/
+
+# 离线部署包
+dist/
