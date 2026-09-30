@@ -1,21 +1,47 @@
 # 电商知识库问答平台 · RAG 评测基线
 
+[![CI](https://github.com/BYL01/Knowledge-Base-System/actions/workflows/ci.yml/badge.svg)](https://github.com/BYL01/Knowledge-Base-System/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.9%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+
 这是一个 **RAG 自动化评测框架的地基**：先把"被评测对象"跑通，让链路可以被拆开单独测量，
 再用一套标注基准把它的真实能力量化出来。评测框架的价值不在代码量，而在于每个指标都能拿到它需要的中间产物。
 
 当前规模：**24 篇语料 / 49 个 chunk / 74 条人工标注基准**。
 
+## 效果预览
+
+默认后端是 `hashing` 检索 + `extractive` 生成，**零 API key、输出确定**，克隆下来即可复现。
+
+**能答的问题**——出答案的同时给出可回溯的引用：
+
+> **问**：评价提交后还可以修改吗？
+> **答**：评价提交后 7 天内可修改一次，之后不可修改。[1] 商家不得以任何形式诱导用户修改或删除评价。[2]
+> **引用**：`评价与晒单规则#00`、`评价与晒单规则#01`
+
+**知识库里没有的问题**——开启语义判官（`answerability.mode: llm`，需要 DeepSeek key）后它会拒答，而不是硬编一个答案：
+
+> **问**：可以用花呗分期支付吗？
+> **答**：知识库中没有找到相关内容。
+> **判官理由**：资料仅提到支持信用卡分期，未提及花呗分期。
+
+74 条基准上的当前表现（DeepSeek 判官已启用，完整指标与归因见下文）：
+
+| doc_hit | chunk_hit | refusal_accuracy | dangling_citations |
+|---|---|---|---|
+| 0.9706 | 0.9559 | 1.0 | 0 |
+
 ## 快速开始
 
-本机没有安装 `python` 命令（Windows Store 占位符），统一用 `py -3.11`：
+需要 `Python 3.9+`。默认链路零 API key、无外部服务即可跑通（Windows 用 `py -3.11`，Linux / macOS 用 `python3`）：
 
-```powershell
-py -3.11 -m pip install -r requirements.txt
-py -3.11 scripts/build_index.py     # 灌库：语料 -> chunk -> 向量
-py -3.11 scripts/resolve_evidence.py  # 按原文依据对齐 gold_chunk_ids（改语料/切块后重跑）
-py -3.11 scripts/run_batch.py       # 跑 golden 集，落盘中间产物 + 打印指标
-py -3.11 scripts/gate.py            # 质量门禁：指标不达标返回非 0，CI 直接当卡口
-py -3.11 -m pytest tests -q         # 冒烟测试（可直接当 CI 第一道门禁）
+```bash
+pip install -r requirements.txt
+python scripts/build_index.py         # 灌库：语料 -> chunk -> 向量
+python scripts/resolve_evidence.py    # 按原文依据对齐 gold_chunk_ids（改语料/切块后重跑）
+python scripts/run_batch.py           # 跑 golden 集，落盘中间产物 + 打印指标
+python scripts/gate.py                # 质量门禁：指标不达标返回非 0，CI 直接当卡口
+python -m pytest tests -q             # 冒烟测试（可直接当 CI 第一道门禁）
 ```
 
 跑批产物：
@@ -162,6 +188,10 @@ p95_latency_ms           1187 <= 2000    PASS
 门禁表达的是产品要求而不是当前水平，把阈值调松就等于把问题藏起来。
 接入语义判官之后它自己变绿，说明这条红线是有效的。
 
+**CI**：`.github/workflows/ci.yml` 每次推送自动跑冒烟测试 + 建索引（零外部依赖，见左上角徽章）。
+语义判官那一档需要 `DEEPSEEK_API_KEY`，所以只在仓库配了该 Secret 时才执行 `run_batch` + `gate`；
+没配就自动跳过，不会让 CI 变红——线上真正的每日门禁仍然由部署服务器上的 systemd timer 承担。
+
 ## 为什么要做成零依赖可跑
 
 默认后端是 `hashing` embedding + `extractive` 生成，**不需要任何 API key，输出完全确定**。
@@ -204,8 +234,8 @@ systemd timer  ->  run_batch.py  ->  gate.py  ->  退出码即门禁结果
 
 目标环境是**无 Docker、无 Jenkins 的 Linux 服务器**（原本以为没外网，实测能通 pypi 和 DeepSeek），整套走离线安装：
 
-```powershell
-py -3.11 deploy/build_bundle.py      # 在本机打离线包（含 Linux 版 wheel）
+```bash
+python deploy/build_bundle.py        # 在本机打离线包（含 Linux 版 wheel）
 ```
 
 ```bash

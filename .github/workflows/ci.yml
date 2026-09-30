@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    name: 冒烟测试 + 建索引
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 冒烟测试
+        run: python -m pytest tests -q
+
+      - name: 构建索引（本地 hashing，无外部依赖）
+        run: python scripts/build_index.py
+
+  gate:
+    name: 质量门禁（需 DEEPSEEK_API_KEY）
+    runs-on: ubuntu-latest
+    needs: smoke
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 安装依赖
+        run: pip install -r requirements.txt
+
+      - name: 是否配置了判官密钥
+        id: key
+        run: |
+          if [ -n "${{ secrets.DEEPSEEK_API_KEY }}" ]; then
+            echo "present=1" >> "$GITHUB_OUTPUT"
+            echo "已配置 DEEPSEEK_API_KEY，将执行跑批 + 门禁。"
+          else
+            echo "present=0" >> "$GITHUB_OUTPUT"
+            echo "未配置 DEEPSEEK_API_KEY，跳过语义判官门禁；线上每日门禁仍由部署服务器上的 systemd timer 执行。"
+          fi
+
+      - name: 跑批 + 质量门禁
+        if: steps.key.outputs.present == '1'
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          python scripts/build_index.py
+          python scripts/run_batch.py
+          python scripts/gate.py
